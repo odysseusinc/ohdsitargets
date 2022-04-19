@@ -51,6 +51,8 @@ buildCohortCapr_factory <- function(connectionDetails,
                                     caprFunctions,
                                     vocabularyDatabaseSchmea) {
   
+  command_loadConceptSets <- substitute()
+  
   command_createCohortDataframe <- substitute(Capr::createCohortDataframe(cohortList = cohortList, 
                                                                           generateStats = TRUE),
                                               env = list(cohortList = sym_cohortList))
@@ -145,3 +147,29 @@ generateCohortSet_factory <- function(connectionDetails,
 
 
 # TODO create cohortDiagnostics_factory
+
+cohortDiagnostics_factory <- function(cohortDataframe,
+                                      databaseId,
+                                      connectionDetails,
+                                      cdmDatabaseSchema,
+                                      cohortDatabaseSchema,
+                                      cohortTableNames,
+                                      vocabularyDatabaseSchema,
+                                      minCellCount = 5) {
+  
+  ## create target factory ---------------
+  list(
+  tar_target_raw("databaseMeta", command_saveDatabaseMeta, deployment = "main"),
+  tar_target_raw("conceptTable", command_createConceptTable, deployment = "main"),
+  tar_target_raw("cohortCounts", command_computeCohortCounts, deployment = "main"),
+  tar_target_raw("inclusionStats", command_runInclusionStats, deployment = "main"),
+  tar_target_raw("conceptSetDiagnostics", command_runConceptSetDiagnostics, deployment = "main"),
+  tar_target_raw("timeDistributions", command_runTimeDistributions, deployment = "main"),
+  tar_target_raw("visitContext", command_runVisitContext, deployment = "main"),
+  tar_target_raw("incidenceRate", command_runIncidenceRate, deployment = "main"),
+  tar_target_raw("timeSeries", command_runTimeSeries, deployment = "main"),
+  tar_target_raw("cohortOverlap", command_runCohortOverlap, deployment = "main"),
+  tar_target_raw("cohortCharacterization", command_runCohortCharacterization, deployment = "main"),
+  tar_target_raw("temporalCohortCharacterization", command_runTemporalCohortCharacterization, deployment = "main")
+  )
+}
