@@ -9,7 +9,8 @@ omopConnection_factory <- function(projectName,
                                                server = config::get("server"),
                                                user = config::get("user"),
                                                password = config::get("password"),
-                                               port = "5441"))
+                                               port = "5441")
+    )
   
   command_createCohortTables <- substitute(
     projectCohortTables(projectName = projectName,
@@ -17,7 +18,8 @@ omopConnection_factory <- function(projectName,
                         cohortDatabaseSchema = cohortDatabaseSchema),
     env = list(projectName = sym_projectName,
                connectionDetails = sym_connectionDetails,
-               cohortDatabaseSchema = sym_cohortDatabaseSchema))
+               cohortDatabaseSchema = sym_cohortDatabaseSchema)
+    )
   
   
   list(
@@ -30,7 +32,55 @@ omopConnection_factory <- function(projectName,
   )
 }
 
-#factory to generate cohorts
+
+
+
+# TODO create buildCohort_factory
+
+buildCohortCapr_factory <- function(connectionDetails,
+                                    conceptsFile,
+                                    caprFunctions,
+                                    cdmDatabaseSchema,
+                                    vocabularyDatabaseSchmea) {
+  
+}
+
+# TODO create loadWebApi_factory
+loadWebApi_factory <- function(baseurl,
+                               cohortIds) {
+  
+  #create commands -----
+  #set the baseurl
+  command_setBaseUrl <- substitute(
+    setUrl(baseurl = baseurl),
+    env = list(baseurl = baseurl)
+  )
+  
+  #set the cohortIds to extract
+  command_setCohortIds <- substitute(
+    setCohortIds(cohortIds = cohortIds),
+    env = list(cohortIds = cohortIds)
+  )
+  
+  #grab the cohorts from webApi
+  command_grabCohorts <- substitute(
+    ROhdsiWebApi::exportCohortDefinitionSet(baseUrl = baseUrl,
+                                            cohortIds = cohortIds,
+                                            generateStats = TRUE),
+    env = list(baseUrl = baseUrl,
+                cohortIds = cohortIds)
+  )
+  
+  
+  list(
+    tar_target_raw("baseUrl", command_setBaseUrl, format = "url", deployment = "main"),
+    tar_target_raw("cohortIds", command_setCohortIds, deployment = "main"),
+    tar_target_raw("webApiCohorts", command_grabCohorts, deployment = "main")
+  )
+}
+
+
+#TODO factory to generate cohorts
 generateCohort_factory <- function(connectionDetails,
                                    cohortList,
                                    cdmDatabaseSchema,
@@ -56,13 +106,7 @@ generateCohort_factory <- function(connectionDetails,
   sym_cohortList <- rlang::expr(cohortList)
   sym_cohortDataframe <- as.symbol('cohortDataframe')
   
-  #create calls
-  # command_createConnectionDetails <- substitute(DatabaseConnector::createConnectionDetails(dbms = "postgresql",
-  #                                                                                          server = config::get("server"),
-  #                                                                                          user = config::get("user"),
-  #                                                                                          password = config::get("password"),
-  #                                                                                          port = "5441",
-  #                                                                                          pathToDriver = 'drivers'))
+  #create calls  
   command_createCohortTables <- substitute(projectCohortTables(projectName = projectName,
                                                                connectionDetails = connectionDetails,
                                                                cohortDatabaseSchema = cohortDatabaseSchema),
@@ -91,3 +135,6 @@ generateCohort_factory <- function(connectionDetails,
     tar_target_raw("cohortGenerate", command_generateCohortSet, deployment = "main")
   )
 }
+
+
+# TODO create cohortDiagnostics_factory
