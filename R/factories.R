@@ -155,11 +155,12 @@ cohortDiagnostics_factory <- function(cohortDataframe,
                                       cohortDatabaseSchema,
                                       cohortTableNames,
                                       vocabularyDatabaseSchema,
+                                      exportFolder, 
                                       minCellCount = 5) {
   
   ## create target factory ---------------
   list(
-  tar_target_raw("databaseMeta", command_saveDatabaseMeta, deployment = "main"),
+  tar_target_raw("databaseMeta", command_saveDatabaseMeta, format = "file", deployment = "main"),
   tar_target_raw("conceptTable", command_createConceptTable, deployment = "main"),
   tar_target_raw("cohortCounts", command_computeCohortCounts, deployment = "main"),
   tar_target_raw("inclusionStats", command_runInclusionStats, deployment = "main"),
