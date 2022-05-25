@@ -1,4 +1,20 @@
 # TODO translate Cohort Diagnostics into targets workflow
+diagnostics_cdmSourceInformation <- function(connectionDetails,
+                                             cdmDatabaseSchema) {
+  
+  #connect to database
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+  
+  #get cdm information
+  cdmSourceInformation <-
+    CohortDiagnostics:::getCdmDataSourceInformation(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema
+    )
+}
+
+
 
 diagnosticsDatabaseMeta <- function(connectionDetails,
                                     cdmDatabaseSchema,
@@ -62,6 +78,31 @@ getObservationPeriod <- function(connectionDetails,
   return(observationPeriodDateRange)
 }
 
+diagnostics_ConceptTable <- function(connectionDetails,
+                                     cdmDatabaseSchema
+                                     tempEmulationSchema = NULL,
+                                     conceptIdTable,
+                                     vocabularyTableNames = CohortDiagnostics:::getDefaultVocabularyTableNames(),
+                                     exportFolder) {
+  
+  #create Concept Table
+  sql <-
+    SqlRender::loadRenderTranslateSql(
+      "CreateConceptIdTable.sql",
+      packageName = utils::packageName(),
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
+      table_name = "#concept_ids"
+    )
+  DatabaseConnector::executeSql(
+    connection = connection,
+    sql = sql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+}
+
 
 diagnostics_ComputeCohortCounts <- function(connectionDetails,
                                             cohortDatabaseSchema,
@@ -76,4 +117,35 @@ diagnostics_ComputeCohortCounts <- function(connectionDetails,
   ) %>%
     mutate(databaseId = databaseId)
   return(cohortCounts)
+}
+
+
+diagnostics_instantiatedCohorts <- function(cohortCounts) {
+  instantiatedCohorts <- cohortCounts %>%
+    dplyr::filter(.data$cohortEntries > 0) %>%
+    dplyr::pull(.data$cohortId)
+  return(instantiatedCohorts)
+}
+
+diagnostics_RunInclusionStats <- function(connectionDetails,
+                                          exportFolder,
+                                          databaseId,
+                                          cohortCounts,
+                                          cohortDefinitionSet,
+                                          cohortDatabaseSchema,
+                                          cohortTableNames,
+                                          minCellCount) {
+  getInclusionStats(
+    connection = connection,
+    exportFolder = exportFolder,
+    databaseId = databaseId,
+    cohortDefinitionSet = cohortDefinitionSet,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTableNames = cohortTableNames,
+    incremental = FALSE,
+    instantiatedCohorts = instantiatedCohorts,
+    minCellCount = minCellCount,
+    recordKeepingFile = NULL
+  )
+  
 }
