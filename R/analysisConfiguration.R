@@ -66,19 +66,19 @@ initializeStudySession <- function(database,
   #set keyring function for password
   pw <- toupper(paste(database, "password", sep = "_")) %>%
     purrr::map(~rlang::call2(
-                  expr(keyring::key_get),
+                  rlang::expr(keyring::key_get),
                   .x)) %>%
     purrr::map(~deparse1(.x))
 
   # setup connection details
   conCalls <- purrr::map(c("dbms", "user", "password", "server", "port"),
                          ~rlang::call2(
-                           expr(config::get),
+                           rlang::expr(config::get),
                            .x)) %>%
     purrr::set_names(c("dbms", "user", "password", "server", "port"))
-  conCalls$password <- expr(eval(rlang::parse_expr(!!conCalls$password)))
+  conCalls$password <- rlang::expr(eval(rlang::parse_expr(!!conCalls$password)))
    conDet <- rlang::call2(
-      expr(DatabaseConnector::createConnectionDetails),
+      rlang::expr(DatabaseConnector::createConnectionDetails),
       !!!conCalls) %>%
      rlang::call_standardise() %>%
     deparse1()
