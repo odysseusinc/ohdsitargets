@@ -85,7 +85,7 @@ diagnosticsConceptTable <- function(connectionDetails,
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
       tempEmulationSchema = tempEmulationSchema,
-      table_name = DBI::SQL(cohortDatabaseSchema, paste0("concept_ids", "_", studyName))
+      table_name = paste0(cohortDatabaseSchema, ".concept_ids", "_", studyName)
     )
   DatabaseConnector::executeSql(
     connection = connection,
@@ -160,7 +160,7 @@ diagnosticsInclusionStats <- function(connectionDetails,
 
   CohortGenerator::insertInclusionRuleNames(
     connection = connection,
-    cohortDefinitionSet = subset,
+    cohortDefinitionSet = cohorts,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortInclusionTable = cohortTableNames$cohortInclusionTable
   )
@@ -177,7 +177,7 @@ diagnosticsInclusionStats <- function(connectionDetails,
   ) # Note use of FALSE to always generate stats here
   stats <-
     CohortDiagnostics:::getInclusionStatisticsFromFiles(
-      cohortIds = subset$cohortId,
+      cohortIds = cohorts$cohortId,
       folder = inclusionStatisticsFolder
    )
   #get inclusion rule info
@@ -318,17 +318,6 @@ diagnosticsIncludedSourceConcepts <- function(connectionDetails,
     databaseId = databaseId
   )
   
-  sql <-
-    "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    include_source_concept_table = "#inc_src_concepts",
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  
   if (!is.null(conceptIdTable)) {
     sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
@@ -346,6 +335,19 @@ diagnosticsIncludedSourceConcepts <- function(connectionDetails,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
+  
+  sql <-
+    "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql = sql,
+    tempEmulationSchema = tempEmulationSchema,
+    include_source_concept_table = "#inc_src_concepts",
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+
   }
   
   return(included_source_concept)
@@ -536,14 +538,14 @@ diagnosticsIndexEventBreakdown <- function(connectionDetails,
     data <- data %>%
       dplyr::mutate(databaseId = !!databaseId)
     data <-
-      enforceMinCellValue(data, "conceptCount", minCellCount)
+      CohortDiagnostics:::enforceMinCellValue(data, "conceptCount", minCellCount)
     if ("subjectCount" %in% colnames(data)) {
       data <-
         CohortDiagnostics:::enforceMinCellValue(data, "subjectCount", minCellCount)
     }
   }
   
-  data_index_event <- makeDataExportable(
+  data_index_event <- CohortDiagnostics:::makeDataExportable(
     x = data,
     tableName = "index_event_breakdown",
     minCellCount = minCellCount,
@@ -553,9 +555,45 @@ diagnosticsIndexEventBreakdown <- function(connectionDetails,
 }
 
 diagnosticsOrphanConcepts <- function(connectionDetails,
+                                      cohorts,
                                       cdmDatabaseSchema,
+                                      cohortDatabaseSchema,
                                       tempEmulationSchema,
-                                      conceptIdTable) {
+                                      conceptIdTable,
+                                      studyName) {
+  
+  #set connection
+  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+  
+  #find unique concepts
+  conceptSets <- CohortDiagnostics:::combineConceptSetsFromCohorts(cohorts)
+  uniqueConceptSets <-
+    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
+    dplyr::select(-.data$cohortId, -.data$conceptSetId)
+  
+  CohortDiagnostics:::instantiateUniqueConceptSets(
+    uniqueConceptSets = uniqueConceptSets,
+    connection = connection,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptSetsTable = "#inst_concept_sets"
+  )
+  
+  
+  conceptCountsTable <- paste0("concept_counts", "_", studyName)
+  
+  #create concept counts table
+  CohortDiagnostics:::createConceptCountsTable(
+    connection = connection,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptCountsDatabaseSchema = cohortDatabaseSchema,
+    conceptCountsTable = conceptCountsTable,
+    conceptCountsTableIsTemp = FALSE
+  )
+  
   # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
   data <- list()
   for (i in (1:nrow(uniqueConceptSets))) {
@@ -565,15 +603,15 @@ diagnosticsOrphanConcepts <- function(connectionDetails,
       conceptSet$conceptSetName,
       "'"
     )
-    data[[i]] <- .findOrphanConcepts(
+    data[[i]] <- CohortDiagnostics:::.findOrphanConcepts(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       useCodesetTable = TRUE,
       codesetId = conceptSet$uniqueConceptSetId,
-      conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+      conceptCountsDatabaseSchema = cdmDatabaseSchema,
       conceptCountsTable = conceptCountsTable,
-      conceptCountsTableIsTemp = conceptCountsTableIsTemp,
+      conceptCountsTableIsTemp = FALSE,
       instantiatedCodeSets = "#inst_concept_sets",
       orphanConceptTable = "#orphan_concepts"
     )
@@ -673,7 +711,13 @@ diagnosticsTimeSeries <- function(connectionDetails,
     stratifyByGender = TRUE,
     stratifyByAgeGroup = TRUE,
     cohortIds = cohorts$cohortId
-  )
+  ) %>%
+    CohortDiagnostics:::makeDataExportable(
+      x = .,
+      tableName = "time_series",
+      minCellCount = minCellCount,
+      databaseId = databaseId
+    )
   
   return(timeSeries)
   
@@ -701,13 +745,21 @@ diagnosticsVisitContext <- function(connectionDetails,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId,
     conceptIdTable = conceptIdTable
+  ) %>%
+  CohortDiagnostics:::makeDataExportable(
+    x = .,
+    tableName = "visit_context",
+    minCellCount = minCellCount,
+    databaseId = databaseId
   )
+  
   return(visitContext)
 }
 
 # Step 8: Run Incidence Rate --------------------------------
 diagnosticsIncidenceRate <- function(connectionDetails,
                                      cdmDatabaseSchema,
+                                     tempEmulationSchema,
                                      cohortDatabaseSchema,
                                      cohortDefinitionSet,
                                      cohortTable,
@@ -720,19 +772,35 @@ diagnosticsIncidenceRate <- function(connectionDetails,
   cohorts <- cohortDefinitionSet %>%
     dplyr::filter(.data$cohortId %in% instantiatedCohorts)
   
-  incidenceRate <- CohortDiagnostics:::getIncidenceRate(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    cdmVersion = 5,
-    firstOccurrenceOnly = TRUE,
-    washoutPeriod = 365,
-    cohortId = cohorts$cohortId
-  )
+  cohorts <- split(cohorts, cohorts$cohortId)
+  ids <- purrr::map_int(cohorts, ~.x$cohortId)
+  
+  data <- purrr::map(cohorts, 
+               ~CohortDiagnostics:::getIncidenceRate(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema, 
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      cdmVersion = 5,
+      firstOccurrenceOnly = TRUE,
+      washoutPeriod = 365,
+      cohortId = .x$cohortId
+    )) %>%
+    purrr::map2_dfr(ids, ~dplyr::mutate(.x, cohortId = .y))
+
+ incidenceRate <- CohortDiagnostics:::makeDataExportable(
+      x = data,
+      tableName = "incidence_rate",
+      minCellCount = minCellCount,
+      databaseId = databaseId
+    )
+  
+  
   return(incidenceRate)
 }
+
 
 
 
@@ -824,7 +892,13 @@ diagnosticsCohortRelationship <- function(connectionDetails,
       endDay = temporalCovariateSettings$temporalEndDays
     ),
     observationPeriodRelationship = TRUE
-  )
+  ) %>%
+    CohortDiagnostics:::makeDataExportable(
+      x = .,
+      tableName = "cohort_relationships",
+      minCellCount = minCellCount,
+      databaseId = databaseId
+    )
   return(cohortRelationship)
 }
 
@@ -843,7 +917,7 @@ diagnosticsTemproalCohortCharacterization <- function(connectionDetails,
   cohorts <- cohortDefinitionSet %>%
     dplyr::filter(.data$cohortId %in% instantiatedCohorts)
   
-  characteristics <- getCohortCharacteristics(
+  characteristics <- CohortDiagnostics:::getCohortCharacteristics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
