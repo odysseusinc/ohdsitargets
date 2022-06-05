@@ -1,2 +1,5 @@
 ^LICENSE\.md$
-/scratch
+scratch/
+^.*\.Rproj$
+^\.Rproj\.user$
+

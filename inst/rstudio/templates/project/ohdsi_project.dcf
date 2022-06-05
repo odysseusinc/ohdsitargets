@@ -1,0 +1,4 @@
+Binding: ohdsi_project
+Title: OHDSI Study Pipeline
+OpenFiles: _targets.R
+Icon: ohdsiLogo.png
