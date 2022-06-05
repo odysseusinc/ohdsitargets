@@ -1,32 +1,38 @@
-setPasswords <- function(databases) {
-  purrr::map(databases, ~toupper(paste(.x, "password", sep = "_"))) %>%
-    purrr::walk(~keyring::key_set(.x, prompt = paste(.x, "Password:"))) %>%
-    purrr::walk(~usethis::ui_done("keyring set for {ui_field(.x)}"))
+set_credential <- function(database, credential) {
+  cred <- toupper(paste(database, credential, sep = "_"))
+  keyring::key_set(cred, prompt = paste0(cred, ":"))
+  usethis::ui_done("keyring set for {ui_field(cred)}")
 }
 
-#' Function that initializes the study project for analysis
-#'
-#' This function sets the config.yml file used to facilitate aspects of the
-#' database connection used for the analysis. Contact your database administrator
-#' to ensure you have all the information needed to run an OHDSI analysis. You must
-#' have read access to the cdm and vocabulary schemas. You must have read and write
-#' access to a user specific results schema (or a scratch schema). The results schema
-#' should be seperate from the schema used by webAPI. This function does not have an input for
-#' passwords, which is done by design. When this function is run, the user will be prompted to input
-#' the password corresponding to the database user, using the {keyring} package in R. This input
-#' does not leave a trace in the .Rhistory.
-#'
+
+init_study <- function(path) {
+  default <- list('default' = list(
+    cohortOutput = "output/cohorts/results",
+    diagnosticsOutput = "output/diagnostics/results",
+    characterizationOutput = "output/characterization/results"
+  )
+  )
+  
+  eunomia <- list('eunomia' = list(
+    database = "Eunomia",
+    dbms = "sqlite",
+    cdmDatabaseSchema = "main",
+    vocabularyDatabaseSchema = "main",
+    resultsDatabaseSchema = "main")
+    )
+  config <- append(default, eunomia)
+  yaml::write_yaml(config, file = file.path(path,"config.yml"))
+  invisible()
+}
+
+#' Function to add new database connection in config file
+#' 
+#' This function will add a new database connection into the config.yml file
+#' which specifies the configurations of the ohdsi study. The function will
+#' prompt a keyring input for the user, host and password. 
 #' @param database the database names hosting the OMOP data (ex. synpuf_110k). Can take multiple inputs
-#' @param studyName a name for this study; default is TREADS
-#' @param jarFolder a folder to download the jdbc drivers for DatabaseConnector; default is jarFolder
-#' @param diagnosticsFolder a folder to write CohortDiagnostics results; default is diagnostics
-#' @param jsonFolder a folder to write cohort definition jsons; default is json
-#' @param cohortOutputFolder a folder to write rds files for cohort definitions; default is cohort
 #' @param dbms the dbms used for the OMOP database (ex. postgresql, redshift, sql server). This
 #' argument takes all dbms types that are compatible with DatabaseConnector. Can take multiple inputs based on the number of databases entered
-#' @param server the server name for the OMOP database. Contact your database admin for a full server string.
-#' Can take multiple inputs based on the number of databases entered
-#' @param user the user for the OMOP database. Can take multiple inputs based on the number of databases entered
 #' @param port the port used for the OMOP databse. Can take multiple inputs based on the number of databases entered
 #' @param cdmDatabaseSchema the schema that holds the cdm tables. Make sure your user has read access.
 #' Can take multiple inputs based on the number of databases entered.
@@ -35,86 +41,43 @@ setPasswords <- function(databases) {
 #' @param resultsDatabaseSchema the schema that hosts the result tables for this study. This schema should be separate from the
 #' the results schema used by webAPI. Make sure your user has read and write access. Can take multiple inputs based on the number
 #' of databases entered.
+#' @param configFile the location of the config file used for the analysis
 #' @import usethis magrittr
 #' @export
-
-initializeStudySession <- function(database,
-                             studyName,
-                             jarFolder = "jarFolder",
-                             diagnosticsFolder = "diagnostics",
-                             jsonFolder = "json",
-                             cohortOutputFolder = "cohort",
-                             dbms,
-                             server,
-                             user,
-                             port,
-                             cdmDatabaseSchema,
-                             vocabularyDatabaseSchema,
-                             resultsDatabaseSchema) {
-  #set environment variable
-  Sys.setenv(R_CONFIG_ACTIVE = database[1])
-  usethis::ui_info("R_CONFIG_ACTIVE variable set to {ui_value(database[1])}")
-
-  Sys.setenv(DATABASECONNECTOR_JAR_FOLDER = jarFolder)
-  usethis::ui_info("DATABASECONNECTOR_JAR_FOLDER variable set to {ui_path(jarFolder)}")
-
-  purrr::walk(dbms, ~DatabaseConnector::downloadJdbcDrivers(dbms = .x))
-  usethis::ui_done("Downloaded Jdbc Drivers to {ui_value(jarFolder)}")
-
-  setPasswords(database)
-
-  #set keyring function for password
-  pw <- toupper(paste(database, "password", sep = "_")) %>%
-    purrr::map(~rlang::call2(
-                  expr(keyring::key_get),
-                  .x)) %>%
-    purrr::map(~deparse1(.x))
-
-  # setup connection details
-  conCalls <- purrr::map(c("dbms", "user", "password", "server", "port"),
-                         ~rlang::call2(
-                           expr(config::get),
-                           .x)) %>%
-    purrr::set_names(c("dbms", "user", "password", "server", "port"))
-  conCalls$password <- expr(eval(rlang::parse_expr(!!conCalls$password)))
-   conDet <- rlang::call2(
-      expr(DatabaseConnector::createConnectionDetails),
-      !!!conCalls) %>%
-     rlang::call_standardise() %>%
-    deparse1()
-
-
-  #table names for analysis
-  tabNames <- purrr::map(CohortGenerator::getCohortTableNames(),
-                          ~paste(.x, studyName, sep = "_"))
-
-  #get all inputs for configFile
-  default <- list('default' = list(studyName = studyName,
-                                   diagnosticsFolder = diagnosticsFolder,
-                                   jsonFolder = jsonFolder,
-                                   cohortOutputFolder = cohortOutputFolder,
-                                   connectionDetails = conDet,
-                                   cohortTableNames = tabNames))
-  ll <- list(database = database,
-             dbms = dbms,
-             server = server,
-             user = user,
-             password = pw,
-             port = port,
-             cdmDatabaseSchema = cdmDatabaseSchema,
-             vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-             resultsDatabaseSchema = resultsDatabaseSchema) %>%
-    purrr::transpose() %>%
-    purrr::set_names(database)
-
-
-
-  yaml::write_yaml(append(default, ll), file = "config.yml")
-  usethis::ui_done("Initialized config.yml file")
-
-  #invisible return
-  invisible()
+add_databaseConnection <- function(database,
+                                   dbms,
+                                   port = NULL,
+                                   cdmDatabaseSchema,
+                                   vocabularyDatabaseSchema,
+                                   resultsDatabaseSchema,
+                                   configFile = "config.yml") {
+  
+  #load old yaml file
+  oldYml <- yaml::yaml.load_file(configFile)
+  
+  purrr::walk(c("host", "user", "password"), 
+              ~set_credential(database = database, credential = .x))
+  
+  ll <- list(
+    list(
+      database = database,
+      dbms = dbms,
+      user = keyring::key_get(toupper(paste(database, "user", sep = "_"))),
+      password = keyring::key_get(toupper(paste(database, "user", sep = "_"))),
+      server = paste(keyring::key_get(toupper(paste(database, "user", sep = "_"))), database, sep = "/"),
+      port = port,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      resultsDatabaseSchema = resultsDatabaseSchema
+    )
+  )
+  names(ll) <- database
+  yaml::write_yaml(append(oldYml, ll), file = "config.yml")
+  usethis::ui_done("Added new database connection: {ui_value(database)}")
+  
 }
+  
+
 
 #' Function that orients the active database in the analysis
 #'
