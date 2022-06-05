@@ -1,11 +1,11 @@
-setPasswords <- function(databases) {
-  purrr::map(databases, ~toupper(paste(.x, "password", sep = "_"))) %>%
-    purrr::walk(~keyring::key_set(.x, prompt = paste(.x, "Password:"))) %>%
-    purrr::walk(~usethis::ui_done("keyring set for {ui_field(.x)}"))
+set_credential <- function(database, credential) {
+  cred <- toupper(paste(database, credential, sep = "_"))
+  keyring::key_set(cred, prompt = paste0(cred, ":"))
+  usethis::ui_done("keyring set for {ui_field(cred)}")
 }
 
 
-initOhdsiStudy <- function(path) {
+init_study <- function(path) {
   default <- list('default' = list(
     cohortOutput = "output/cohorts/results",
     diagnosticsOutput = "output/diagnostics/results",
@@ -24,6 +24,45 @@ initOhdsiStudy <- function(path) {
   yaml::write_yaml(config, file = file.path(path,"config.yml"))
   invisible()
 }
+
+#' Function to add new database connection in config file
+#' 
+#' This function will add a new database connection into the config.yml file
+#' which specifies the configurations of the ohdsi study. The function will
+#' prompt a keyring input for the user, host and password. 
+add_databaseConnection <- function(database,
+                                   dbms,
+                                   port = NULL,
+                                   cdmDatabaseSchema,
+                                   vocabularyDatabaseSchema,
+                                   resultsDatabaseSchema,
+                                   configFile = Sys.getenv("R_CONFIG_FILE", "config.yml")) {
+  
+  #load old yaml file
+  oldYml <- yaml::yaml.load_file(configFile)
+  
+  purrr::walk(c("host", "user", "password"), 
+              ~set_credential(database = database, credential = .x))
+  
+  ll <- list(
+    list(
+      database = database,
+      dbms = dbms,
+      user = keyring::key_get(toupper(paste(database, "user", sep = "_"))),
+      password = keyring::key_get(toupper(paste(database, "user", sep = "_"))),
+      server = paste(keyring::key_get(toupper(paste(database, "user", sep = "_"))), database, sep = "/"),
+      port = port,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      resultsDatabaseSchema = resultsDatabaseSchema
+    )
+  )
+  names(ll) <- database
+  yaml::write_yaml(append(oldYml, ll), file = "config.yml")
+  usethis::ui_done("Added new database connection: {ui_value(database)}")
+  
+}
+  
 
 
 #' Function that orients the active database in the analysis

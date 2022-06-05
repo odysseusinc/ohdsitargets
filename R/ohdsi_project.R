@@ -40,7 +40,7 @@ ohdsi_project <- function(path) {
   writeLines(paste(git_ignores, sep = '\n'), con = file.path(path, ".gitignore"))
   
   #create config file --------------
-  initOhdsiStudy(path)
+  init_study(path)
   
   #create targets file --------------------
   targetsPath <- system.file("targets/ohdsiScript.R", package = "ohdsitargets")
