@@ -30,13 +30,27 @@ init_study <- function(path) {
 #' This function will add a new database connection into the config.yml file
 #' which specifies the configurations of the ohdsi study. The function will
 #' prompt a keyring input for the user, host and password. 
+#' @param database the database names hosting the OMOP data (ex. synpuf_110k). Can take multiple inputs
+#' @param dbms the dbms used for the OMOP database (ex. postgresql, redshift, sql server). This
+#' argument takes all dbms types that are compatible with DatabaseConnector. Can take multiple inputs based on the number of databases entered
+#' @param port the port used for the OMOP databse. Can take multiple inputs based on the number of databases entered
+#' @param cdmDatabaseSchema the schema that holds the cdm tables. Make sure your user has read access.
+#' Can take multiple inputs based on the number of databases entered.
+#' @param vocabularyDatabaseSchmea the schema that holds the vocabulary tables. Many times this is the same as the cdm schema.
+#' Make sure your user has read access. Can take multiple inputs based on the number of databases entered.
+#' @param resultsDatabaseSchema the schema that hosts the result tables for this study. This schema should be separate from the
+#' the results schema used by webAPI. Make sure your user has read and write access. Can take multiple inputs based on the number
+#' of databases entered.
+#' @param configFile the location of the config file used for the analysis
+#' @import usethis magrittr
+#' @export
 add_databaseConnection <- function(database,
                                    dbms,
                                    port = NULL,
                                    cdmDatabaseSchema,
                                    vocabularyDatabaseSchema,
                                    resultsDatabaseSchema,
-                                   configFile = Sys.getenv("R_CONFIG_FILE", "config.yml")) {
+                                   configFile = "config.yml") {
   
   #load old yaml file
   oldYml <- yaml::yaml.load_file(configFile)
