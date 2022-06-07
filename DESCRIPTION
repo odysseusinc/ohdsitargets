@@ -1,4 +1,4 @@
-Package: ohdsiTargets
+Package: ohdsitargets
 Type: Package
 Title: Targets for OHDSI study pipelines
 Version: 0.0.0.9000

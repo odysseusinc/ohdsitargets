@@ -9,3 +9,4 @@ export(tar_cohorts)
 import(magrittr)
 import(usethis)
 importFrom(magrittr,"%>%")
+
