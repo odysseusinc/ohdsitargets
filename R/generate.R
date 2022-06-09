@@ -32,14 +32,17 @@ projectCohortTables <- function(projectName,
 tar_cohort_tables <- function(name,
                               connectionDetails = config::get("connectionDetails"),
                               cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-                              cohortTableNames = config::get("cohortTableNames")) {
+                              cohortTableName = config::get("cohortTableName")) {
 
+  stopifnot(is.character(cohortTableName))
+  
   name <- targets::tar_deparse_language(substitute(name))
-
+  cohortTableNames <- tabNames <- CohortGenerator::getCohortTableNames(cohortTableName) 
+  suppressWarnings(
   CohortGenerator::createCohortTables(connectionDetails,
                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                       cohortTableNames = cohortTableNames,
-                                      incremental = FALSE)
+                                      incremental = FALSE))
 
   # Return an R object that acts as a local reference the cohort table in the database
   # Importantly, if this function ever reruns the output will be different from the previous output since the timestamp will be different
