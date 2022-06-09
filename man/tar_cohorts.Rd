@@ -4,7 +4,13 @@
 \alias{tar_cohorts}
 \title{Create references to generated cohorts}
 \usage{
-tar_cohorts(name, cohortsToCreate, cohortTableRef)
+tar_cohorts(
+  name,
+  cohortsToCreate,
+  cohortTableRef,
+  connectionDetails = config::get("connectionDetails"),
+  cdmDatabaseSchema = config::get("cdmDatabaseSchema")
+)
 }
 \arguments{
 \item{name}{Symbol, base name for the collection of cohort targets}
