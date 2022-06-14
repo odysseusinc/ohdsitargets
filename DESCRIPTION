@@ -22,5 +22,6 @@ Imports:
     dplyr,
     keyring,
     magrittr,
+    rlang,
     tarchetypes,
     targets

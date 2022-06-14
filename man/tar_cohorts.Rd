@@ -5,17 +5,17 @@
 \title{Create references to generated cohorts}
 \usage{
 tar_cohorts(
-  name,
   cohortsToCreate,
-  cohortTableRef,
   connectionDetails = config::get("connectionDetails"),
-  cdmDatabaseSchema = config::get("cdmDatabaseSchema")
+  cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
+  cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
+  cohortTableName = config::get("cohortTableName")
 )
 }
 \arguments{
-\item{name}{Symbol, base name for the collection of cohort targets}
-
 \item{cohortsToCreate}{A dataframe with one row per cohort and the following columns: cohortId, cohortName, cohortJsonPath}
+
+\item{name}{Symbol, base name for the collection of cohort targets}
 
 \item{cohortTable}{A reference to the cohort table created by \code{tar_cohort_tables}}
 }
