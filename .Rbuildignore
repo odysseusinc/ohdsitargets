@@ -1,4 +1,8 @@
 ^LICENSE\.md$
+<<<<<<< HEAD
+^ohdsiTargets\.Rproj$
+=======
 scratch/
 ^.*\.Rproj$
+>>>>>>> main
 ^\.Rproj\.user$

@@ -48,3 +48,17 @@ ohdsi_project <- function(path) {
   writeLines(readr::read_lines(targetsFile), con = file.path(path, "_targets.R"))
   
 }
+
+#' Create example ohdsitargets project
+#' 
+#' 
+#' @param path Folder where the new project should be created
+#'
+#' @export
+create_ohdsitargets_project <- function(path) {
+  path <- path.expand(path)
+  usethis::create_project(path, rstudio = TRUE)
+  from <- list.files(system.file("project_template", package = "ohdsitargets", mustWork = TRUE),
+                      full.names = TRUE, recursive = FALSE, include.dirs = TRUE)
+  invisible(file.copy(from = from, to = path, recursive = TRUE, copy.mode = FALSE))
+}

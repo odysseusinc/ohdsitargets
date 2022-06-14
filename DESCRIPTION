@@ -1,14 +1,27 @@
 Package: ohdsitargets
+Type: Package
 Title: Targets for OHDSI study pipelines
 Version: 0.0.0.9000
-Authors@R: 
-    person("Martin", "Lavallee", , "martin.lavallee@odysseusinc.com", role = c("aut", "cre"))
-    person("Adam", "Black", , "adam.black@odysseusinc.com", role = c("aut", "cre"))
-Description: OHDSI studies contain many pieces that can sometimes be confusing to maintain within an R study package. The goal of ohdsiTargets is to convert OHDSI studies into targets pipelines that are easier to track, debug and proliferate templates for future studies. 
+Authors@R: c(
+  person("Martin", "Lavallee", , "martin.lavallee@odysseusinc.com", role = c("aut", "cre")),
+  person("Adam", "Black", , "adam.black@odysseusinc.com", role = c("aut"))
+  )
+Maintiner: Martin Lavallee <martin.lavallee@odysseusinc.com>
+Description: OHDSI studies can be thought of as a data processing pipeline and are 
+  a good fit for a pipeline tool like targets. The goal of ohdsiTargets is to provide
+  functions that make it easy to create OHDSI studies as targets pipelines. 
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Imports: 
+    config,
+    dplyr,
+    keyring,
+    magrittr,
+    rlang,
+    tarchetypes,
+    targets

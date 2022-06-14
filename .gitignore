@@ -5,4 +5,7 @@
 .Rproj.user/
 .Renviron
 config.yml
+.Rproj.user
 scratch/
+inst/project_template/_targets/
+inst/project_template/errorReportSql.txt

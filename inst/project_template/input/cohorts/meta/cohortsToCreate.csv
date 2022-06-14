@@ -1,0 +1,4 @@
+cohortId,cohortName,filePath
+1,diclofenac,input/cohorts/specification/diclofenac.json
+2,celecoxib,input/cohorts/specification/celecoxib.json
+3,GI_bleed,input/cohorts/specification/GI_bleed.json
