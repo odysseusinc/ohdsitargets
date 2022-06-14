@@ -30,7 +30,7 @@ Sys.setenv(R_CONFIG_ACTIVE = "eunomia")
 cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", show_col_types = F) 
 
 list(
-  tar_cohort_tables(cohortTableRef),
-  tar_cohorts(cohort, cohortsToCreate = cohortSet, cohortTableRef = cohortTableRef)
+  tar_cohort_tables("blah"),
+  tar_cohorts(cohortsToCreate = cohortsToCreate, cohortTableRef = cohort_table)
 )
 

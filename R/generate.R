@@ -17,6 +17,21 @@ projectCohortTables <- function(projectName,
 }
 
 
+create_cohort_table <- function(name,   
+                                connectionDetails = config::get("connectionDetails"),
+                                cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
+                                cohortTableName = config::get("cohortTableName")) {
+  # name <- targets::tar_deparse_language(substitute(name))
+  # browser()
+  cohortTableNames <- CohortGenerator::getCohortTableNames(name) 
+  suppressWarnings(
+    CohortGenerator::createCohortTables(connectionDetails,
+                                        cohortDatabaseSchema = cohortDatabaseSchema,
+                                        cohortTableNames = cohortTableNames,
+                                        incremental = FALSE)
+  )
+  list(structure(list(cohortDatabaseSchema = cohortDatabaseSchema, cohortTableNames = cohortTableNames, createdTimestamp = Sys.time()), class = "cohortTableRef"))
+}
 
 #' Create cohort tables
 #'
@@ -32,25 +47,15 @@ projectCohortTables <- function(projectName,
 tar_cohort_tables <- function(name,
                               connectionDetails = config::get("connectionDetails"),
                               cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-                              cohortTableName = config::get("cohortTableName")) {
+                              cohortTableName = config::get("cohortTableName")) { 
 
-  stopifnot(is.character(cohortTableName))
-  
-  name <- targets::tar_deparse_language(substitute(name))
-  cohortTableNames <- tabNames <- CohortGenerator::getCohortTableNames(cohortTableName) 
-  suppressWarnings(
-  CohortGenerator::createCohortTables(connectionDetails,
-                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                      cohortTableNames = cohortTableNames,
-                                      incremental = FALSE))
+  stopifnot(is.character(name))
+  print("running tar_cohort_tables")
 
   # Return an R object that acts as a local reference the cohort table in the database
   # Importantly, if this function ever reruns the output will be different from the previous output since the timestamp will be different
-
-  targets::tar_target_raw(name,
-    list(structure(list(cohortDatabaseSchema = cohortDatabaseSchema, cohortTableNames = cohortTableNames, createdTimestamp = Sys.time()), class = "cohortTableRef"))
-  )
-
+  # name_as_string <- substitute(deparse(name))
+  targets::tar_target_raw("cohort_table", substitute(ohdsitargets:::create_cohort_table(name, connectionDetails, cohortDatabaseSchema, cohortTableName)))
 }
 
 #' Generate one cohort
@@ -75,6 +80,7 @@ generateCohort <- function(connectionDetails,
   cohortSql <- CirceR::buildCohortQuery(CirceR::cohortExpressionFromJson(cohortJson),
                                         CirceR::createGenerateOptions(generateStats = TRUE))
 
+  # print(str(cohortTableRef))
   # for now use this function to generate a single cohort
   r <- suppressWarnings(CohortGenerator::generateCohortSet(connectionDetails = connectionDetails,
                                                            cdmDatabaseSchema = cdmDatabaseSchema,
@@ -107,20 +113,22 @@ generateCohort <- function(connectionDetails,
 #'
 #' @return One target for each cohort file and for each generated cohort with names cohort_{id}
 #' @export
-tar_cohorts <- function(name, cohortsToCreate, cohortTableRef, connectionDetails = config::get("connectionDetails"), cdmDatabaseSchema = config::get("cdmDatabaseSchema")) {
-  name <- targets::tar_deparse_language(substitute(name))
-  stopifnot(is.list(cohortTableRef), is.data.frame(cohortsToCreate))
+tar_cohorts <- function(cohortsToCreate, cohortTableRef, connectionDetails = config::get("connectionDetails"), cdmDatabaseSchema = config::get("cdmDatabaseSchema")) {
+  # name <- targets::tar_deparse_language(substitute(name))
+  # stopifnot(is.list(cohortTableRef), is.data.frame(cohortsToCreate))
 
+  
   list(
-    tar_target(cohortTableRef, createCohortTables(connectionDetails, cohortTableRef$cohortDatabaseSchema, cohortTableRef$cohortTableNames)),
-    tar_map(values = cohortsToCreate, names = "cohortId",
-            tar_target(cohortFile, paste0("cohorts/", cohortName, ".json"), format = "file"),
-            tar_target(cohortRef, generateCohort(
+    # tar_target_raw("cohortTable", substitute(createCohortTables(connectionDetails, cohortTableRef$cohortDatabaseSchema, cohortTableRef$cohortTableNames))),
+    tarchetypes::tar_map(values = cohortsToCreate, names = "cohortId",
+            tar_target_raw("cohortFile", quote(here::here(filePath)), format = "file"),
+            tar_target_raw("generatedCohort", substitute(generateCohort(
               connectionDetails,
               cdmDatabaseSchema,
               cohortTableRef = cohortTableRef,
               cohortId = cohortId,
               cohortName = cohortName,
               cohortFile = cohortFile)))
+    )
   )
 }

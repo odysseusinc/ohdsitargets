@@ -7,3 +7,4 @@
 config.yml
 .Rproj.user
 scratch/
+inst/project_template/_targets/
