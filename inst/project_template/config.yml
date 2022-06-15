@@ -1,0 +1,22 @@
+default:
+  studyName: ExampleStudy
+  
+eunomia:
+  databaseName: eunomia
+  connectionDetails: !expr Eunomia::getEunomiaConnectionDetails()
+  cdmDatabaseSchema: main
+  vocabularyDatabaseSchema: main
+  resultsDatabaseSchema: main
+  cohortTableName: cohort
+  
+  
+synpuf:
+  databaseName: eunomia
+  connectionDetails: !expr createConnectionDetails("postgresql", 
+    user = "postgres", password = "", server = "localhost/covid")
+  cdmDatabaseSchema: main
+  vocabularyDatabaseSchema: main
+  resultsDatabaseSchema: main
+  cohortTableName: cohort
+
+
