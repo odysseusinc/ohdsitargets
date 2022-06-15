@@ -58,8 +58,16 @@ ohdsi_project <- function(path) {
 create_ohdsitargets_project <- function(path) {
   path <- path.expand(path)
   usethis::create_project(path, rstudio = TRUE)
+  
+  # copy files from example except .Rproj file and _targets directory
   from <- list.files(system.file("project_template", package = "ohdsitargets", mustWork = TRUE),
-                      full.names = TRUE, recursive = FALSE, include.dirs = TRUE)
-  # remove the rproj file.
-  invisible(file.copy(from = from, to = path, recursive = TRUE, copy.mode = FALSE))
+                      full.names = TRUE, recursive = FALSE, include.dirs = TRUE) %>% 
+    stringr::str_subset("//.Rproj$|_targets$", negate = TRUE)
+  
+  r <- file.copy(from = from, to = path, recursive = TRUE, copy.mode = FALSE)
+  
+  if (file.exists(file.path(path, ".gitignore"))) {
+    readr::write_lines("config.yml", file.path(path, ".gitignore"), append = TRUE)
+  }
+  invisible(r)
 }
