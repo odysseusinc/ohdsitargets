@@ -55,6 +55,7 @@ ohdsi_project <- function(path) {
 #' @param path Folder where the new project should be created
 #'
 #' @export
+#' @importFrom magrittr %>% 
 create_ohdsitargets_project <- function(path) {
   path <- path.expand(path)
   usethis::create_project(path, rstudio = TRUE)
@@ -62,7 +63,7 @@ create_ohdsitargets_project <- function(path) {
   # copy files from example except .Rproj file and _targets directory
   from <- list.files(system.file("project_template", package = "ohdsitargets", mustWork = TRUE),
                       full.names = TRUE, recursive = FALSE, include.dirs = TRUE) %>% 
-    stringr::str_subset("//.Rproj$|_targets$", negate = TRUE)
+    stringr::str_subset("project_template.Rproj$|_targets$", negate = TRUE)
   
   r <- file.copy(from = from, to = path, recursive = TRUE, copy.mode = FALSE)
   
