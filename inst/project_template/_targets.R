@@ -30,11 +30,11 @@ Sys.setenv(R_CONFIG_ACTIVE = "eunomia")
 cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", show_col_types = F) 
 
 
-connectionDetails <- config::get("connectionDetails")
+# connectionDetails <- config::get("connectionDetails")
 # con <- DatabaseConnector::connect(cd)
 
 list(
-  # tar_target(connectionDetails, config::get("connectionDetails")), # why does this not work?
+  tar_target(connectionDetails, config::get("connectionDetails")), # why does this not work?
   tar_cohorts(cohortsToCreate = cohortsToCreate, connectionDetails = connectionDetails)
 )
 

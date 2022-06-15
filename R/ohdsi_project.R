@@ -60,5 +60,6 @@ create_ohdsitargets_project <- function(path) {
   usethis::create_project(path, rstudio = TRUE)
   from <- list.files(system.file("project_template", package = "ohdsitargets", mustWork = TRUE),
                       full.names = TRUE, recursive = FALSE, include.dirs = TRUE)
+  # remove the rproj file.
   invisible(file.copy(from = from, to = path, recursive = TRUE, copy.mode = FALSE))
 }

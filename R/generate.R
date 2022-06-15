@@ -1,4 +1,4 @@
-
+# Some code modified from CohortGenerator package https://github.com/OHDSI/CohortGenerator
 
 #' Create cohort tables in a CDM database
 #'
@@ -133,14 +133,15 @@ tar_cohorts <- function(cohortsToCreate,
                         cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
                         cohortTableName = config::get("cohortTableName")) {
   
-  checkmate::check_class(connectionDetails, "connectionDetails")
+  # checkmate::check_class(connectionDetails, "connectionDetails")
   checkmate::check_character(cdmDatabaseSchema, len = 1, min.chars = 1)
   checkmate::check_character(cohortDatabaseSchema, len = 1, min.chars = 1)
   checkmate::check_character(cohortTableName, len = 1, min.chars = 1)
-  checkmate::check_data_frame(cohortsToCreate)
+  # checkmate::check_data_frame(cohortsToCreate)
   
   cohortTableName <- cohortTableName %||% config::get("studyName") %||% "cohort"
-  expr <- substitute(ohdsitargets:::create_cohort_tables(cohortTableName, connectionDetails, cohortDatabaseSchema))
+  connectionDetails <- rlang::expr(connectionDetails)
+  expr <- substitute(ohdsitargets::create_cohort_tables(cohortTableName, connectionDetails, cohortDatabaseSchema))
   list(
     targets::tar_target_raw("cohort_table", expr),
     tarchetypes::tar_map(values = cohortsToCreate, names = "cohortId",
