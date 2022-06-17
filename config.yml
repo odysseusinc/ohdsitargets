@@ -1,0 +1,11 @@
+default:
+  cohortOutput: output/cohorts/results
+  diagnosticsOutput: output/diagnostics/results
+  characterizationOutput: output/characterization/results
+eunomia:
+  database: Eunomia
+  dbms: sqlite
+  cdmDatabaseSchema: main
+  vocabularyDatabaseSchema: main
+  resultsDatabaseSchema: main
+  connectionDetails: !expr Eunomia::getEunomiaConnectionDetails()
