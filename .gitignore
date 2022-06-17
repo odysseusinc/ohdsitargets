@@ -1,3 +1,5 @@
+
+# Basic R ignores
 .Rhistory
 .Rapp.history
 .RData
@@ -5,7 +7,17 @@
 .Rproj.user/
 .Renviron
 .Rproj.user
+
+# ignore any scratch
 scratch/
+
+#ignore portions of project template 
 inst/project_template/_targets/
 inst/project_template/errorReportSql.txt
-./config.yml
+inst/project_template/project_template.Rproj
+
+
+#ignore config.yml at root if there
+#only inst/project_template/config.yml should be pushed
+#part of project template
+./config.yml 

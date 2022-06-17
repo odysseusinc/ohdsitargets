@@ -1,7 +1,19 @@
+# Welcome to ohdsitargets!
+# The current targets script is for the "Hello OHDSI" example 
+# Every {ohdsitargets} pipeline needs a _targets.R file. You may
+# use this to get acquainted with the package or edit to your own study
 
-# This is an example _targets.R file. Every {targets} pipeline needs one.
-# Use tar_script() to create _targets.R and tar_edit()bto open it again for editing.
-# Then, run tar_make() to run the pipeline and tar_read(summary) to view the results.
+# To run the pipeline use targets::tar_make(). To review the pipeline run
+# targets::tar_visnetwork. To look at results from the pipeline use
+# targets::tar_read(<target>), where the bracketed item is replaced with 
+# a suitable target in the ohdsitargets pipeline.
+
+# For questions please review the ohdsitargets vignette (Under Construction) or
+# navigate to the Discussion tab in the ohdsitargets github repository to view 
+# start-up questions.
+
+
+# Prepare Environment ----------------------
 
 # Load packages required to define the pipeline:
 library(ohdsitargets)
@@ -15,14 +27,6 @@ tar_option_set(
   # Set other options as needed.
 )
 
-# tar_make_clustermq() configuration (okay to leave alone):
-# options(clustermq.scheduler = "multicore")
-
-# tar_make_future() configuration (okay to leave alone):
-# Install packages {{future}}, {{future.callr}}, and {{future.batchtools}} to allow use_targets() to configure tar_make_future() options.
-
-# Load the R scripts with your custom functions:
-# for (file in list.files("R", full.names = TRUE)) source(file)
 
 # Set the database
 Sys.setenv(R_CONFIG_ACTIVE = "eunomia")
@@ -30,11 +34,10 @@ Sys.setenv(R_CONFIG_ACTIVE = "eunomia")
 cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", show_col_types = F) 
 
 
-# connectionDetails <- config::get("connectionDetails")
-# con <- DatabaseConnector::connect(cd)
+# Run Targets -----------------------
 
 list(
-  tar_target(connectionDetails, config::get("connectionDetails")), # why does this not work?
+  tar_target(connectionDetails, config::get("connectionDetails")), 
   tar_cohorts(cohortsToCreate = cohortsToCreate, connectionDetails = connectionDetails)
 )
 
