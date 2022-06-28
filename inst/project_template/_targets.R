@@ -1,3 +1,4 @@
+
 # Welcome to ohdsitargets!
 # The current targets script is for the "Hello OHDSI" example 
 # Every {ohdsitargets} pipeline needs a _targets.R file. You may
@@ -28,9 +29,8 @@ tar_option_set(
 )
 
 
-# Set the database
-Sys.setenv(R_CONFIG_ACTIVE = "eunomia")
 
+#set cohorts to track in the pipeline
 cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", show_col_types = F) 
 
 
@@ -38,6 +38,7 @@ cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", sho
 
 list(
   tar_target(connectionDetails, config::get("connectionDetails")), 
-  tar_cohorts(cohortsToCreate = cohortsToCreate, connectionDetails = connectionDetails)
+  tar_database_diagnostics(connectionDetails = connectionDetails),
+  tar_cohorts(cohortsToCreate = cohortsToCreate,
+               connectionDetails = connectionDetails)
 )
-

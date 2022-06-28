@@ -38,8 +38,6 @@ create_cohort_tables <- function(name, connectionDetails, cohortDatabaseSchema) 
   sql <- SqlRender::translate(sql = sql, targetDialect = connection@dbms)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   
-  con <- DatabaseConnector::connect(connectionDetails)
-  on.exit(DatabaseConnector::disconnect(con))
   
   structure(list(cohortDatabaseSchema = cohortDatabaseSchema, 
                  cohortTableNames = cohortTableNames, 
@@ -57,6 +55,7 @@ create_cohort_tables <- function(name, connectionDetails, cohortDatabaseSchema) 
 #' @param cohortId (integer) The id that should be assigned to the generated cohort
 #' @param cohortName (character) The name of cohort
 #' @param cohortFile (character) The path to the cohort json file relative to the project or working directory.
+#' @param tempEmulationSchema the temporary table schema used in certain databases
 #'
 #' @return An R object representing the generated cohort.
 #' @export
@@ -128,19 +127,23 @@ generate_cohort <- function(connectionDetails,
 #' @export
 #' @importFrom rlang %||%
 tar_cohorts <- function(cohortsToCreate, 
+                        active_database = "eunomia",
                         connectionDetails = config::get("connectionDetails"), 
                         cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
                         cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
                         cohortTableName = config::get("cohortTableName")) {
   
-  # checkmate::check_class(connectionDetails, "connectionDetails")
+  
+  
+  #checkmate::check_class(connectionDetails, "connectionDetails")
   checkmate::check_character(cdmDatabaseSchema, len = 1, min.chars = 1)
   checkmate::check_character(cohortDatabaseSchema, len = 1, min.chars = 1)
   checkmate::check_character(cohortTableName, len = 1, min.chars = 1)
-  # checkmate::check_data_frame(cohortsToCreate)
+  #checkmate::check_data_frame(cohortsToCreate)
   
   cohortTableName <- cohortTableName %||% config::get("studyName") %||% "cohort"
   connectionDetails <- rlang::expr(connectionDetails)
+
   expr <- substitute(ohdsitargets::create_cohort_tables(cohortTableName, connectionDetails, cohortDatabaseSchema))
   list(
     targets::tar_target_raw("cohort_table", expr),
