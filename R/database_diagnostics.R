@@ -60,7 +60,7 @@ diagnostics_database_observation_period <- function(connectionDetails,
   
   
   #connect to database
-  connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+  suppressMessages(connection <- DatabaseConnector::connect(connectionDetails = connectionDetails))
   on.exit(DatabaseConnector::disconnect(connection), add = TRUE)
   
   #run observation period query
@@ -121,14 +121,5 @@ tar_database_diagnostics <- function(active_database = "eunomia",
   
 }
 
-tar_cohort_diagnostics <- function(cohortsToTarget,
-                                   connectionDetails,
-                                   active_database = "eunomia",
-                                   cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-                                   vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
-                                   cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-                                   cohortTableName = config::get("cohortTableName"),
-                                   databaseId = config::get("databaseName")) {
-  
-}
+
 

@@ -6,6 +6,7 @@
 \usage{
 tar_cohorts(
   cohortsToCreate,
+  active_database = "eunomia",
   connectionDetails = config::get("connectionDetails"),
   cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
   cohortDatabaseSchema = config::get("resultsDatabaseSchema"),

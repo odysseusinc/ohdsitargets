@@ -26,6 +26,8 @@ generate_cohort(
 \item{cohortName}{(character) The name of cohort}
 
 \item{cohortFile}{(character) The path to the cohort json file relative to the project or working directory.}
+
+\item{tempEmulationSchema}{the temporary table schema used in certain databases}
 }
 \value{
 An R object representing the generated cohort.

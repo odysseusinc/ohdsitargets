@@ -21,6 +21,8 @@ library(ohdsitargets)
 library(targets)
 library(dplyr)
 
+source("~/R/github/ohdsiTargets/R/cohort_diagnostics.R")
+
 # Set target options:
 tar_option_set(
   packages = c("tibble", "dplyr", "CirceR", "CohortGenerator", "here", "DatabaseConnector"), 
@@ -32,7 +34,8 @@ tar_option_set(
 
 #set cohorts to track in the pipeline
 cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", show_col_types = F) 
-
+incidenceAnalysisSettings <- tibble::tibble(firstOccurrenceOnly = TRUE,
+                                            washoutPeriod = 365)
 
 # Run Targets -----------------------
 
@@ -40,5 +43,10 @@ list(
   tar_target(connectionDetails, config::get("connectionDetails")), 
   tar_database_diagnostics(connectionDetails = connectionDetails),
   tar_cohorts(cohortsToCreate = cohortsToCreate,
-               connectionDetails = connectionDetails)
+              connectionDetails = connectionDetails),
+  tar_cohort_inclusion_rules(cohortsToCreate = cohortsToCreate,
+                             connectionDetails = connectionDetails),
+  tar_cohort_incidence(cohortsToCreate = cohortsToCreate,
+                       incidenceAnalysisSettings = incidenceAnalysisSettings,
+                       connectionDetails = connectionDetails)
 )

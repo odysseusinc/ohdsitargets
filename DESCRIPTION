@@ -1,7 +1,7 @@
 Package: ohdsitargets
 Type: Package
 Title: Targets for OHDSI study pipelines
-Version: 0.0.0.9000
+Version: 0.0.0.91
 Authors@R: c(
   person("Martin", "Lavallee", , "martin.lavallee@odysseusinc.com", role = c("aut", "cre")),
   person("Adam", "Black", , "adam.black@odysseusinc.com", role = c("aut"))
