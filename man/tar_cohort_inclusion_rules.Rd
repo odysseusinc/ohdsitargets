@@ -4,21 +4,12 @@
 \alias{tar_cohort_inclusion_rules}
 \title{Create references to inclusion rules analysis per cohort}
 \usage{
-tar_cohort_inclusion_rules(
-  cohortsToCreate,
-  connectionDetails,
-  active_database = "eunomia",
-  databaseId = config::get("databaseName")
-)
+tar_cohort_inclusion_rules(cohortsToCreate, executionSettings)
 }
 \arguments{
 \item{cohortsToCreate}{A dataframe with one row per cohort and the following columns: cohortId, cohortName, cohortJsonPath}
 
-\item{connectionDetails}{ConnectionDetails}
-
-\item{active_database}{the database used in the analysis}
-
-\item{databaseId}{(character) identify which database is being used}
+\item{executionSettings}{An object containing all information of the database connection created from config file}
 }
 \value{
 One target for each generated cohort with names cohortInclusionRules_{id}

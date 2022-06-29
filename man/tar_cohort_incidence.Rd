@@ -7,11 +7,7 @@
 tar_cohort_incidence(
   cohortsToCreate,
   incidenceAnalysisSettings,
-  connectionDetails,
-  active_database = "eunomia",
-  cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-  vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
-  databaseId = config::get("databaseName")
+  executionSettings
 )
 }
 \arguments{
@@ -19,15 +15,7 @@ tar_cohort_incidence(
 
 \item{incidenceAnalysisSettings}{a dataframe where each row is a different combination of anlayis}
 
-\item{connectionDetails}{ConnectionDetails}
-
-\item{active_database}{the database used in the analysis}
-
-\item{cdmDatabaseSchema}{(character) Schema where the CDM data lives in the database}
-
-\item{vocabularyDatabaseSchema}{(character) Schema where the vocabulary tables lives in the database}
-
-\item{databaseId}{(character) identify which database is being used}
+\item{executionSettings}{An object containing all information of the database connection created from config file}
 }
 \value{
 One target for each generated cohort with names cohortInclusionRules_{id}

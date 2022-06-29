@@ -116,19 +116,16 @@ cohort_diagnostics_inclusion_rules <- function(connectionDetails,
 #' Creates targets of inclusion rules for each cohort in the project
 #'
 #' @param cohortsToCreate A dataframe with one row per cohort and the following columns: cohortId, cohortName, cohortJsonPath
-#' @param connectionDetails ConnectionDetails
-#' @param active_database the database used in the analysis
-#' @param databaseId (character) identify which database is being used
+#' @param executionSettings An object containing all information of the database connection created from config file
 #' @return One target for each generated cohort with names cohortInclusionRules_{id}
 #' @export
 tar_cohort_inclusion_rules <- function(cohortsToCreate,
-                                       connectionDetails,
-                                       active_database = "eunomia",
-                                       databaseId = config::get("databaseName")) {
+                                       executionSettings) {
   
-  Sys.setenv(R_CONFIG_ACTIVE = active_database)
-  connectionDetails_sym <- rlang::expr(connectionDetails)
-  
+  #extract out all execution settings
+  connectionDetails <- executionSettings$connectionDetails
+  databaseId <- executionSettings$databaseId
+
   #create tibble to track generated cohorts
   nn <- 1:nrow(cohortsToCreate)
   iter <- tibble::tibble('generatedCohort' = rlang::syms(paste("generatedCohort", nn, sep ="_")),
@@ -143,7 +140,7 @@ tar_cohort_inclusion_rules <- function(cohortsToCreate,
                          tar_target_raw("cohortInclusionRules", 
                                         substitute(
                                           cohort_diagnostics_inclusion_rules(
-                                            connectionDetails = connectionDetails_sym,
+                                            connectionDetails = connectionDetails,
                                             generatedCohort = generatedCohort,
                                             databaseId = databaseId)
                                         )
@@ -159,23 +156,18 @@ tar_cohort_inclusion_rules <- function(cohortsToCreate,
 #'
 #' @param cohortsToCreate A dataframe with one row per cohort and the following columns: cohortId, cohortName, cohortJsonPath
 #' @param incidenceAnalysisSettings a dataframe where each row is a different combination of anlayis
-#' @param connectionDetails ConnectionDetails
-#' @param active_database the database used in the analysis
-#' @param cdmDatabaseSchema (character) Schema where the CDM data lives in the database
-#' @param vocabularyDatabaseSchema (character) Schema where the vocabulary tables lives in the database
-#' @param databaseId (character) identify which database is being used
+#' @param executionSettings An object containing all information of the database connection created from config file
 #' @return One target for each generated cohort with names cohortInclusionRules_{id}
 #' @export
 tar_cohort_incidence <- function(cohortsToCreate,
                                  incidenceAnalysisSettings,
-                                 connectionDetails,
-                                 active_database = "eunomia",
-                                 cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-                                 vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
-                                 databaseId = config::get("databaseName")) {
+                                 executionSettings) {
   
-  Sys.setenv(R_CONFIG_ACTIVE = active_database)
-  connectionDetails_sym <- rlang::expr(connectionDetails)
+  #extract out all execution settings
+  connectionDetails <- executionSettings$connectionDetails
+  cdmDatabaseSchema <- executionSettings$cdmDatabaseSchema
+  vocabularyDatabaseSchema <- executionSettings$vocabularyDatabaseSchema
+  databaseId <- executionSettings$databaseId
   
   
   nn <- 1:nrow(cohortsToCreate)
@@ -192,7 +184,7 @@ tar_cohort_incidence <- function(cohortsToCreate,
                          tar_target_raw("cohortIncidence", 
                                         substitute(
                                           cohort_diagnostics_incidence(
-                                            connectionDetails = connectionDetails_sym,
+                                            connectionDetails = connectionDetails,
                                             cdmDatabaseSchema = cdmDatabaseSchema,
                                             vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                                             generatedCohort = generatedCohort,
@@ -206,24 +198,24 @@ tar_cohort_incidence <- function(cohortsToCreate,
 }
 
 
-tar_cohort_diagnostics <- function(cohortsToCreate,
-                                   incidenceAnalysisSettings,
-                                   connectionDetails,
-                                   active_database = "eunomia",
-                                   cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-                                   vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
-                                   databaseId = config::get("databaseName")){
-  list(
-    tar_cohort_inclusion_rules(cohortsToCreate = cohortsToCreate,
-                               connectionDetails = connectionDetails,
-                               active_database = active_database,
-                               databaseId = databaseId),
-    tar_cohort_incidence(cohortsToCreate = cohortsToCreate,
-                         incidenceAnalysisSettings = incidenceAnalysisSettings,
-                         connectionDetails = connectionDetails,
-                         active_database = active_database,
-                         cdmDatabaseSchema = cdmDatabaseSchema,
-                         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-                         databaseId = databaseId)
-  )
-}
+# tar_cohort_diagnostics <- function(cohortsToCreate,
+#                                    incidenceAnalysisSettings,
+#                                    connectionDetails,
+#                                    active_database = "eunomia",
+#                                    cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
+#                                    vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
+#                                    databaseId = config::get("databaseName")){
+#   list(
+#     tar_cohort_inclusion_rules(cohortsToCreate = cohortsToCreate,
+#                                connectionDetails = connectionDetails,
+#                                active_database = active_database,
+#                                databaseId = databaseId),
+#     tar_cohort_incidence(cohortsToCreate = cohortsToCreate,
+#                          incidenceAnalysisSettings = incidenceAnalysisSettings,
+#                          connectionDetails = connectionDetails,
+#                          active_database = active_database,
+#                          cdmDatabaseSchema = cdmDatabaseSchema,
+#                          vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+#                          databaseId = databaseId)
+#   )
+# }

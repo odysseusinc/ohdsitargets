@@ -51,6 +51,8 @@ create_cohort_tables <- function(name, connectionDetails, cohortDatabaseSchema) 
 #'
 #' @param connectionDetails ConnectionDetails
 #' @param cdmDatabaseSchema (character) Schema where the CDM data lives in the database
+#' @param vocabularyDatabaseSchema (character) Schema where the vocabulary tables lives in the database
+#' @param databaseId (character) identify which database is being used
 #' @param cohortTableRef A cohort table reference as returned by the `create_cohort_tables()` function
 #' @param cohortId (integer) The id that should be assigned to the generated cohort
 #' @param cohortName (character) The name of cohort
@@ -61,6 +63,8 @@ create_cohort_tables <- function(name, connectionDetails, cohortDatabaseSchema) 
 #' @export
 generate_cohort <- function(connectionDetails,
                             cdmDatabaseSchema,
+                            vocabularyDatabaseSchema,
+                            databaseId,
                             cohortTableRef,
                             cohortId,
                             cohortName,
@@ -68,6 +72,9 @@ generate_cohort <- function(connectionDetails,
                             tempEmulationSchema = getOption("sqlRenderTempEmulationSchema")) {
 
   cohortJson <- readr::read_file(cohortFile)
+  cohortCapr <- Capr::readInCirce(cohortFile, 
+                                  connectionDetails = connectionDetails, 
+                                  vocabularyDatabaseSchema = vocabularyDatabaseSchema)
   cohortSql <- CirceR::buildCohortQuery(CirceR::cohortExpressionFromJson(cohortJson),
                                         CirceR::createGenerateOptions(generateStats = TRUE))
   
@@ -111,7 +118,9 @@ generate_cohort <- function(connectionDetails,
   structure(list(cohort_id = cohortId, 
                  cohort_entries = max(cnt$cohort_entries, 0),
                  cohort_subjects = max(cnt$cohort_subjects, 0),
+                 cohort_definition = cohortCapr,
                  timestamp = Sys.time(),
+                 database_id = databaseId, 
                  cohortTableRef = cohortTableRef), class = "generatedCohort")
 }
 
@@ -119,39 +128,47 @@ generate_cohort <- function(connectionDetails,
 #'
 #' Creates targets for each cohort in the project
 #'
-#' @param name Symbol, base name for the collection of cohort targets
 #' @param cohortsToCreate A dataframe with one row per cohort and the following columns: cohortId, cohortName, cohortJsonPath
 #' @param cohortTable A reference to the cohort table created by `tar_cohort_tables`
+#' @param executionSettings An object containing all information of the database connection created from config file
 #'
 #' @return One target for each cohort file and for each generated cohort with names cohort_{id}
 #' @export
 #' @importFrom rlang %||%
 tar_cohorts <- function(cohortsToCreate, 
-                        active_database = "eunomia",
-                        connectionDetails = config::get("connectionDetails"), 
-                        cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-                        cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-                        cohortTableName = config::get("cohortTableName")) {
+                        executionSettings) {
   
+  #extract out all execution settings
+  cohortTableName <- executionSettings$cohortTableName
+  connectionDetails <- executionSettings$connectionDetails
+  cohortDatabaseSchema <- executionSettings$resultsDatabaseSchema
+  cdmDatabaseSchema <- executionSettings$cdmDatabaseSchema
+  vocabularyDatabaseSchema <- executionSettings$vocabularyDatabaseSchema
+  databaseId <- executionSettings$databaseId
+  studyName <- executionSettings$studyName
   
+  # temporarily remove checkmates
+  # #checkmate::check_class(connectionDetails, "connectionDetails")
+  # checkmate::check_character(cdmDatabaseSchema, len = 1, min.chars = 1)
+  # checkmate::check_character(cohortDatabaseSchema, len = 1, min.chars = 1)
+  # checkmate::check_character(cohortTableName, len = 1, min.chars = 1)
+  # #checkmate::check_data_frame(cohortsToCreate)
   
-  #checkmate::check_class(connectionDetails, "connectionDetails")
-  checkmate::check_character(cdmDatabaseSchema, len = 1, min.chars = 1)
-  checkmate::check_character(cohortDatabaseSchema, len = 1, min.chars = 1)
-  checkmate::check_character(cohortTableName, len = 1, min.chars = 1)
-  #checkmate::check_data_frame(cohortsToCreate)
-  
-  cohortTableName <- cohortTableName %||% config::get("studyName") %||% "cohort"
-  connectionDetails <- rlang::expr(connectionDetails)
+  cohortTableName <- cohortTableName %||% studyName %||% "cohort"
+  #connectionDetails <- rlang::expr(connectionDetails)
 
-  expr <- substitute(ohdsitargets::create_cohort_tables(cohortTableName, connectionDetails, cohortDatabaseSchema))
+  expr <- substitute(ohdsitargets::create_cohort_tables(name = cohortTableName, 
+                                                        connectionDetails = connectionDetails, 
+                                                        cohortDatabaseSchema = cohortDatabaseSchema))
   list(
     targets::tar_target_raw("cohort_table", expr),
     tarchetypes::tar_map(values = cohortsToCreate, names = "cohortId",
             tar_target_raw("cohortFile", quote(here::here(filePath)), format = "file"),
             tar_target_raw("generatedCohort", substitute(generate_cohort(
-              connectionDetails,
-              cdmDatabaseSchema,
+              connectionDetails = connectionDetails,
+              cdmDatabaseSchema = cdmDatabaseSchema,
+              vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+              databaseId = databaseId,
               cohortTableRef = cohort_table,
               cohortId = cohortId,
               cohortName = cohortName,

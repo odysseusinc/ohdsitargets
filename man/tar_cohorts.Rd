@@ -4,19 +4,12 @@
 \alias{tar_cohorts}
 \title{Create references to generated cohorts}
 \usage{
-tar_cohorts(
-  cohortsToCreate,
-  active_database = "eunomia",
-  connectionDetails = config::get("connectionDetails"),
-  cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-  cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-  cohortTableName = config::get("cohortTableName")
-)
+tar_cohorts(cohortsToCreate, executionSettings)
 }
 \arguments{
 \item{cohortsToCreate}{A dataframe with one row per cohort and the following columns: cohortId, cohortName, cohortJsonPath}
 
-\item{name}{Symbol, base name for the collection of cohort targets}
+\item{executionSettings}{An object containing all information of the database connection created from config file}
 
 \item{cohortTable}{A reference to the cohort table created by \code{tar_cohort_tables}}
 }

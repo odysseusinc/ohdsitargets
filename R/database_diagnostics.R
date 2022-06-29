@@ -84,33 +84,30 @@ diagnostics_database_observation_period <- function(connectionDetails,
 #'
 #' Summarize information about the database used in the analysis
 #'
-#' @param connectionDetails ConnectionDetails
+#' @param executionSettings An object containing all information of the database connection created from config file
 #'
 #' @return multiple targets with information about database (summarize more later)
 #' @export
-tar_database_diagnostics <- function(active_database = "eunomia",
-                                     connectionDetails,
-                                     cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-                                     vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
-                                     cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-                                     cohortTableName = config::get("cohortTableName"),
-                                     databaseId = config::get("databaseName")) {
+tar_database_diagnostics <- function(executionSettings) {
   
   
-  Sys.setenv(R_CONFIG_ACTIVE = active_database)
-  connectionDetails_sym <- rlang::expr(connectionDetails)
+  #extract out all execution settings
+  connectionDetails <- executionSettings$connectionDetails
+  cdmDatabaseSchema <- executionSettings$cdmDatabaseSchema
+  vocabularyDatabaseSchema <- executionSettings$vocabularyDatabaseSchema
+  databaseId <- executionSettings$databaseId
   
   #create call functions
   
   databaseMeta_call <- substitute(diagnostics_database_meta(
-    connectionDetails_sym,
+    connectionDetails,
     cdmDatabaseSchema,
     vocabularyDatabaseSchema,
     databaseId
   ))
   
   databaseOP_call <- substitute(diagnostics_database_observation_period(
-    connectionDetails_sym,
+    connectionDetails,
     cdmDatabaseSchema
   ))
   

@@ -21,8 +21,8 @@ library(ohdsitargets)
 library(targets)
 library(dplyr)
 
-source("~/R/github/ohdsiTargets/R/cohort_diagnostics.R")
-
+# source("~/R/github/ohdsiTargets/R/pipeline_setup.R")
+# source("~/R/github/ohdsiTargets/R/generate.R")
 # Set target options:
 tar_option_set(
   packages = c("tibble", "dplyr", "CirceR", "CohortGenerator", "here", "DatabaseConnector"), 
@@ -32,21 +32,30 @@ tar_option_set(
 
 
 
-#set cohorts to track in the pipeline
+## Setup Pipeline ----------------------
+
+#define execution settings
+executionSettings <- create_execution_settings(active_database = "eunomia")
+#define cohorts to create
 cohortsToCreate <- readr::read_csv("input/cohorts/meta/CohortsToCreate.csv", show_col_types = F) 
+#define incidence Analysis
 incidenceAnalysisSettings <- tibble::tibble(firstOccurrenceOnly = TRUE,
                                             washoutPeriod = 365)
+
 
 # Run Targets -----------------------
 
 list(
-  tar_target(connectionDetails, config::get("connectionDetails")), 
-  tar_database_diagnostics(connectionDetails = connectionDetails),
+  #Step1: Database Diagnostics
+  tar_database_diagnostics(executionSettings = executionSettings),
+  #step2: generate cohorts
   tar_cohorts(cohortsToCreate = cohortsToCreate,
-              connectionDetails = connectionDetails),
+             executionSettings = executionSettings),
+  #step 3: analyze inclusion rules for cohorts
   tar_cohort_inclusion_rules(cohortsToCreate = cohortsToCreate,
-                             connectionDetails = connectionDetails),
+                             executionSettings = executionSettings),
+  #step 4: analyze incidence for cohorts
   tar_cohort_incidence(cohortsToCreate = cohortsToCreate,
                        incidenceAnalysisSettings = incidenceAnalysisSettings,
-                       connectionDetails = connectionDetails)
+                       executionSettings = executionSettings)
 )

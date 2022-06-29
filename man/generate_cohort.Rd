@@ -7,6 +7,8 @@
 generate_cohort(
   connectionDetails,
   cdmDatabaseSchema,
+  vocabularyDatabaseSchema,
+  databaseId,
   cohortTableRef,
   cohortId,
   cohortName,
@@ -18,6 +20,10 @@ generate_cohort(
 \item{connectionDetails}{ConnectionDetails}
 
 \item{cdmDatabaseSchema}{(character) Schema where the CDM data lives in the database}
+
+\item{vocabularyDatabaseSchema}{(character) Schema where the vocabulary tables lives in the database}
+
+\item{databaseId}{(character) identify which database is being used}
 
 \item{cohortTableRef}{A cohort table reference as returned by the \code{create_cohort_tables()} function}
 

@@ -4,18 +4,10 @@
 \alias{tar_database_diagnostics}
 \title{Create series of targets that provide information about the database}
 \usage{
-tar_database_diagnostics(
-  active_database = "eunomia",
-  connectionDetails,
-  cdmDatabaseSchema = config::get("cdmDatabaseSchema"),
-  vocabularyDatabaseSchema = config::get("vocabularyDatabaseSchema"),
-  cohortDatabaseSchema = config::get("resultsDatabaseSchema"),
-  cohortTableName = config::get("cohortTableName"),
-  databaseId = config::get("databaseName")
-)
+tar_database_diagnostics(executionSettings)
 }
 \arguments{
-\item{connectionDetails}{ConnectionDetails}
+\item{executionSettings}{An object containing all information of the database connection created from config file}
 }
 \value{
 multiple targets with information about database (summarize more later)
