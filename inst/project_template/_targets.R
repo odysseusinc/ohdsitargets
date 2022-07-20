@@ -9,9 +9,6 @@
 # targets::tar_read(<target>), where the bracketed item is replaced with 
 # a suitable target in the ohdsitargets pipeline.
 
-# For questions please review the ohdsitargets vignette (Under Construction) or
-# navigate to the Discussion tab in the ohdsitargets github repository to view 
-# start-up questions.
 
 
 # Prepare Environment ----------------------
@@ -25,7 +22,8 @@ library(dplyr)
 # source("~/R/github/ohdsiTargets/R/generate.R")
 # Set target options:
 tar_option_set(
-  packages = c("tibble", "dplyr", "CirceR", "CohortGenerator", "here", "DatabaseConnector"), 
+  packages = c("tibble", "dplyr", "CirceR", "Capr",
+               "CohortGenerator", "here", "DatabaseConnector"), 
   format = "rds" # default storage format
   # Set other options as needed.
 )

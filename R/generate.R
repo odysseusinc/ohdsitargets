@@ -115,7 +115,8 @@ generate_cohort <- function(connectionDetails,
   sql <- SqlRender::translate(sql = sql,targetDialect = connectionDetails$dbms)
   cnt <- DatabaseConnector::dbGetQuery(connection, sql)
   
-  structure(list(cohort_id = cohortId, 
+  structure(list(cohort_id = cohortId,
+                 cohort_name = cohortName,
                  cohort_entries = max(cnt$cohort_entries, 0),
                  cohort_subjects = max(cnt$cohort_subjects, 0),
                  cohort_definition = cohortCapr,
